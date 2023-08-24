@@ -2,39 +2,43 @@ package main
 
 import (
 	"fmt"
-	"regexp"
+	"strings"
 )
 
-var Dictionary string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+var LowercaseDictionary string = "abcdefghijklmnopqrstuvwxyz"
+var UppercaseDictionary string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+const DictionaryLength = 26
 
 type Encoder struct {
 }
 
-func NewEncoder() {
+func NewEncoder(e *Encoder) *Encoder {
+	return e
 }
 
 func (e *Encoder) Encrypt(str string, key int32) string {
 	runes := []rune(str)
 	new_str := []rune("")
 	for i := 0; i < len(runes); i++ {
-		Isletter := regexp.MustCompile(`^[a-zA-Z]+$`).MatchString(string(runes[i]))
-		Iscapital := regexp.MustCompile(`^[A-Z]+$`).MatchString(string(runes[i]))
-		if Isletter {
-			if Iscapital {
-				if runes[i]+key > 90 {
-					new_str = append(new_str, runes[i]+key-26)
+		IsLowercase := strings.ContainsRune(LowercaseDictionary, runes[i])
+		IsUppercase := strings.ContainsRune(UppercaseDictionary, runes[i])
+		if IsLowercase {
+			if runes[i]+key > 'z' {
+				new_str = append(new_str, runes[i]+key-DictionaryLength)
+			} else {
+				new_str = append(new_str, runes[i]+key)
+			}
+		} else {
+			if IsUppercase {
+				if runes[i]+key > 'Z' {
+					new_str = append(new_str, runes[i]+key-DictionaryLength)
 				} else {
 					new_str = append(new_str, runes[i]+key)
 				}
 			} else {
-				if runes[i]+3 > 122 {
-					new_str = append(new_str, runes[i]+key-26)
-				} else {
-					new_str = append(new_str, runes[i]+key)
-				}
+				new_str = append(new_str, runes[i])
 			}
-		} else {
-			new_str = append(new_str, runes[i])
 		}
 	}
 	return string(new_str)
@@ -44,24 +48,24 @@ func (e *Encoder) Decrypt(str string, key int32) string {
 	runes := []rune(str)
 	new_str := []rune("")
 	for i := 0; i < len(runes); i++ {
-		Isletter := regexp.MustCompile(`^[a-zA-Z]+$`).MatchString(string(runes[i]))
-		Iscapital := regexp.MustCompile(`^[A-Z]+$`).MatchString(string(runes[i]))
-		if Isletter {
-			if Iscapital {
-				if runes[i]-key < 65 {
-					new_str = append(new_str, runes[i]-key+26)
+		IsLowercase := strings.ContainsRune(LowercaseDictionary, runes[i])
+		IsUppercase := strings.ContainsRune(UppercaseDictionary, runes[i])
+		if IsLowercase {
+			if runes[i]+key < 'a' {
+				new_str = append(new_str, runes[i]-key-DictionaryLength)
+			} else {
+				new_str = append(new_str, runes[i]-key)
+			}
+		} else {
+			if IsUppercase {
+				if runes[i]+key < 'A' {
+					new_str = append(new_str, runes[i]-key-DictionaryLength)
 				} else {
 					new_str = append(new_str, runes[i]-key)
 				}
 			} else {
-				if runes[i]-key < 97 {
-					new_str = append(new_str, runes[i]-key+26)
-				} else {
-					new_str = append(new_str, runes[i]-key)
-				}
+				new_str = append(new_str, runes[i])
 			}
-		} else {
-			new_str = append(new_str, runes[i])
 		}
 	}
 	return string(new_str)
@@ -69,7 +73,8 @@ func (e *Encoder) Decrypt(str string, key int32) string {
 
 func main() {
 	var a Encoder
-	b := a.Encrypt("Hello, world!", 3)
+	a1 := NewEncoder(&a)
+	b := a1.Encrypt("Hello, world!", 3)
 	fmt.Println(b)
-	fmt.Println(a.Decrypt(b, 3))
+	fmt.Println(a1.Decrypt(b, 3))
 }
