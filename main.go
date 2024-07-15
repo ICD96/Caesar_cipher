@@ -3,6 +3,8 @@ package main
 import (
 	"fmt"
 	"strings"
+
+	"github.com/spf13/pflag"
 )
 
 var LowercaseDictionary string = "abcdefghijklmnopqrstuvwxyz"
@@ -72,9 +74,18 @@ func (e *Encoder) Decrypt(str string, key int32) string {
 }
 
 func main() {
-	var a Encoder
-	a1 := NewEncoder(&a)
-	b := a1.Encrypt("Hello, world!", 3)
-	fmt.Println(b)
-	fmt.Println(a1.Decrypt(b, 3))
+	var encoder Encoder
+	NewEncoder(&encoder)
+	var encryptedMessage, decryptedMessage string
+	var key int32
+	pflag.StringVarP(&encryptedMessage, "encrypt", "e", "", "Шифрование соообщения")
+	pflag.StringVarP(&decryptedMessage, "decrypt", "d", "", "Дешифрование соообщения")
+	pflag.Int32VarP(&key, "key", "k", 0, "Ключ сдвига при шифровании")
+	pflag.Parse()
+	if encryptedMessage != "" {
+		fmt.Println(encoder.Encrypt(encryptedMessage, key))
+	}
+	if decryptedMessage != "" {
+		fmt.Println(encoder.Decrypt(decryptedMessage, key))
+	}
 }
