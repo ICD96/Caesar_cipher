@@ -1,81 +1,80 @@
 package main
 
 import (
+	"errors"
 	"fmt"
+	"os"
 	"strings"
 
 	"github.com/spf13/pflag"
 )
 
-var LowercaseDictionary string = "abcdefghijklmnopqrstuvwxyz"
-var UppercaseDictionary string = "ABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-const DictionaryLength = 26
-
 type Encoder struct {
+	lowerList string
+	upperList string
 }
 
-func NewEncoder(e *Encoder) *Encoder {
-	return e
+func NewEncoder(lowerList, upperList string) (*Encoder, error) {
+	if len(lowerList) != len(upperList) {
+		return &Encoder{lowerList: lowerList, upperList: upperList}, errors.New("len of lowerList not equal to len of upperList")
+	}
+	return &Encoder{lowerList: lowerList, upperList: upperList}, nil
 }
 
 func (e *Encoder) Encrypt(str string, key int32) string {
 	runes := []rune(str)
-	new_str := []rune("")
+	newStr := []rune{}
 	for i := 0; i < len(runes); i++ {
-		IsLowercase := strings.ContainsRune(LowercaseDictionary, runes[i])
-		IsUppercase := strings.ContainsRune(UppercaseDictionary, runes[i])
-		if IsLowercase {
+		isLower := strings.ContainsRune(e.lowerList, runes[i])
+		isUpper := strings.ContainsRune(e.upperList, runes[i])
+		if isLower {
 			if runes[i]+key > 'z' {
-				new_str = append(new_str, runes[i]+key-DictionaryLength)
+				newStr = append(newStr, runes[i]+key-int32(len(e.lowerList)))
 			} else {
-				new_str = append(new_str, runes[i]+key)
+				newStr = append(newStr, runes[i]+key)
 			}
-		} else {
-			if IsUppercase {
-				if runes[i]+key > 'Z' {
-					new_str = append(new_str, runes[i]+key-DictionaryLength)
-				} else {
-					new_str = append(new_str, runes[i]+key)
-				}
+		}
+		if isUpper {
+			if runes[i]+key > 'Z' {
+				newStr = append(newStr, runes[i]+key-int32(len(e.upperList)))
 			} else {
-				new_str = append(new_str, runes[i])
+				newStr = append(newStr, runes[i]+key)
 			}
 		}
 	}
-	return string(new_str)
+	return string(newStr)
 }
 
 func (e *Encoder) Decrypt(str string, key int32) string {
 	runes := []rune(str)
-	new_str := []rune("")
+	newStr := []rune{}
 	for i := 0; i < len(runes); i++ {
-		IsLowercase := strings.ContainsRune(LowercaseDictionary, runes[i])
-		IsUppercase := strings.ContainsRune(UppercaseDictionary, runes[i])
-		if IsLowercase {
-			if runes[i]+key < 'a' {
-				new_str = append(new_str, runes[i]-key-DictionaryLength)
+		isLower := strings.ContainsRune(e.lowerList, runes[i])
+		isUpper := strings.ContainsRune(e.upperList, runes[i])
+		if isLower {
+			if runes[i]+key > 'a' {
+				newStr = append(newStr, runes[i]-key+int32(len(e.lowerList)))
 			} else {
-				new_str = append(new_str, runes[i]-key)
+				newStr = append(newStr, runes[i]-key)
 			}
-		} else {
-			if IsUppercase {
-				if runes[i]+key < 'A' {
-					new_str = append(new_str, runes[i]-key-DictionaryLength)
-				} else {
-					new_str = append(new_str, runes[i]-key)
-				}
+		}
+		if isUpper {
+			if runes[i]+key > 'A' {
+				newStr = append(newStr, runes[i]-key+int32(len(e.upperList)))
 			} else {
-				new_str = append(new_str, runes[i])
+				newStr = append(newStr, runes[i]-key)
 			}
 		}
 	}
-	return string(new_str)
+	return string(newStr)
 }
 
 func main() {
-	var encoder Encoder
-	NewEncoder(&encoder)
+	encoder, err := NewEncoder("abcdefghijklmnopqrstuvwxyz", "ABCDEFGHIJKLMNOPQRSTUVWXYZ")
+	if err != nil {
+		fmt.Println(err)
+		os.Exit(0)
+	}
 	var encryptedMessage, decryptedMessage string
 	var key int32
 	pflag.StringVarP(&encryptedMessage, "encrypt", "e", "", "Шифрование соообщения")
